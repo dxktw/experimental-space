@@ -5,6 +5,8 @@ OS_AUTH_URL="https://keystone.rumble.cloud"
 OS_PROJECT_NAME="orchestration-syndicate-beta"
 OS_USERNAME="01hkrw9056f1q8vgqx19pc4pt7"
 OS_PASSWORD="8e3cdcedd7125e86c919509bcc2121c502363e1af4a949003114bf3cb8674430"
+OS_USER_DOMAIN_NAME="Default"
+OS_PROJECT_DOMAIN_NAME="Default"
 OS_REGION_NAME="us-east-1"
 OS_INTERFACE="public"
 OS_IDENTITY_API_VERSION=3
@@ -26,6 +28,8 @@ clouds:
       auth_url: $OS_AUTH_URL
       application_credential_id: $OS_APPLICATION_CREDENTIAL_ID
       application_credential_secret: $OS_APPLICATION_CREDENTIAL_SECRET
+      user_domain_name: $OS_USER_DOMAIN_NAME
+      project_domain_name: $OS_PROJECT_DOMAIN_NAME
     region_name: $OS_REGION_NAME
     interface: $OS_INTERFACE
     identity_api_version: $OS_IDENTITY_API_VERSION
@@ -38,6 +42,8 @@ export OS_AUTH_URL=$OS_AUTH_URL
 export OS_PROJECT_NAME=$OS_PROJECT_NAME
 export OS_USERNAME=$OS_USERNAME
 export OS_PASSWORD=$OS_PASSWORD
+export OS_USER_DOMAIN_NAME=$OS_USER_DOMAIN_NAME
+export OS_PROJECT_DOMAIN_NAME=$OS_PROJECT_DOMAIN_NAME
 export OS_REGION_NAME=$OS_REGION_NAME
 export OS_INTERFACE=$OS_INTERFACE
 export OS_IDENTITY_API_VERSION=$OS_IDENTITY_API_VERSION
@@ -78,4 +84,87 @@ biff = no
 append_dot_mydomain = no
 readme_directory = no
 compatibility_level = 2
-smtpd_tls_cert_file=/etc/letsencrypt/live
+smtpd_tls_cert_file=/etc/letsencrypt/live/$MAIL_SERVER/fullchain.pem
+smtpd_tls_key_file=/etc/letsencrypt/live/$MAIL_SERVER/privkey.pem
+smtpd_use_tls=yes
+smtpd_tls_auth_only = yes
+smtp_tls_security_level = may
+smtp_tls_loglevel = 1
+smtpd_tls_loglevel = 1
+smtpd_tls_received_header = yes
+smtpd_tls_session_cache_timeout = 3600s
+smtpd_tls_session_cache_database = btree:\${data_directory}/smtpd_scache
+smtp_tls_session_cache_database = btree:\${data_directory}/smtp_scache
+milter_protocol = 6
+milter_default_action = accept
+smtpd_milters = inet:localhost:8891
+non_smtpd_milters = inet:localhost:8891
+EOL
+
+sudo systemctl restart postfix
+
+# Configure Dovecot
+sudo tee -a /etc/dovecot/dovecot.conf > /dev/null <<EOL
+protocols = imap pop3 lmtp
+mail_location = maildir:~/Maildir
+namespace inbox {
+  inbox = yes
+}
+auth_mechanisms = plain login
+userdb {
+  driver = passwd
+}
+passdb {
+  driver = pam
+}
+service auth {
+  unix_listener /var/spool/postfix/private/auth {
+    mode = 0666
+  }
+}
+EOL
+
+sudo systemctl restart dovecot
+
+# Set up SSL certificates using Let's Encrypt
+sudo apt install -y certbot
+sudo certbot certonly --standalone -d $MAIL_SERVER
+
+# Set up DKIM
+sudo apt install -y opendkim opendkim-tools
+sudo tee /etc/opendkim.conf > /dev/null <<EOL
+Syslog yes
+UMask 002
+Domain $DOMAIN
+Selector $DKIM_SELECTOR
+KeyFile /etc/opendkim/keys/$DOMAIN.private
+Socket inet:8891@localhost
+EOL
+
+sudo mkdir -p /etc/opendkim/keys
+sudo opendkim-genkey -s $DKIM_SELECTOR -d $DOMAIN
+sudo mv $DKIM_SELECTOR.private /etc/opendkim/keys/$DOMAIN.private
+sudo chown opendkim:opendkim /etc/opendkim/keys/$DOMAIN.private
+
+sudo tee /etc/default/opendkim > /dev/null <<EOL
+SOCKET="inet:8891@localhost"
+EOL
+
+sudo tee -a /etc/postfix/main.cf > /dev/null <<EOL
+milter_protocol = 6
+milter_default_action = accept
+smtpd_milters = inet:localhost:8891
+non_smtpd_milters = inet:localhost:8891
+EOL
+
+sudo systemctl restart opendkim
+sudo systemctl restart postfix
+EOF
+
+# Install and Configure Netbird VPN on the Ansible Host
+ssh -o StrictHostKeyChecking=no -i /path/to/private_key_file ubuntu@$ANSIBLE_HOST_IP <<EOF
+curl -fsSL https://packages.netbird.io/install.sh | sudo bash
+sudo netbird up
+EOF
+
+echo "Setup completed successfully."
