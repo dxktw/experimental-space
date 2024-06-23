@@ -1,5 +1,17 @@
 #!/usr/bin/env bash
 
+export OS_AUTH_TYPE=v3applicationcredential
+export OS_AUTH_URL=https://keystone.rumble.cloud
+
+# With Keystone you pass the keystone password.
+export OS_APPLICATION_CREDENTIAL_ID=a18f623f2cb4495e8440d9d5267c2578
+
+export OS_APPLICATION_CREDENTIAL_SECRET=If6bLp19BuZJ8KEwZT_J7hGSFRIrwXe9qVyFKTQoqrYrF7BcZXtufYgr3_yPNRqArsh2ZEmCXX1ayaroyYNOKA
+
+export OS_INTERFACE=public
+export OS_IDENTITY_API_VERSION=3
+export OS_REGION_NAME=us-east-1
+
 # Source the openrc.sh file
 source openrc.sh
 
