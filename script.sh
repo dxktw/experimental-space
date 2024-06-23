@@ -5,14 +5,13 @@ OS_AUTH_URL="https://docs.rumble.cloud/"
 OS_PROJECT_NAME="Orchestration"
 OS_USERNAME="01hkrw9056f1q8vgqx19pc4pt7"
 OS_PASSWORD="8e3cdcedd7125e86c919509bcc2121c502363e1af4a949003114bf3cb8674430"
+OS_REGION_NAME="RegionOne"
+OS_INTERFACE="public"
+OS_IDENTITY_API_VERSION=3
 DOMAIN="syndicate.vip"
 MAIL_SERVER="mail.$DOMAIN"
 DKIM_SELECTOR="default"
-OS_NETWORK_ID="" # Add your network ID
-
-# Install necessary packages
-sudo apt update
-sudo apt install -y python3-openstackclient python3-octaviaclient ansible postfix dovecot-core dovecot-imapd dovecot-pop3d certbot opendkim opendkim-tools
+OS_NETWORK_ID="2" # Add your network ID
 
 # Configure OpenStack CLI
 mkdir -p ~/.config/openstack
@@ -24,12 +23,15 @@ clouds:
       username: $OS_USERNAME
       password: $OS_PASSWORD
       project_name: $OS_PROJECT_NAME
-      user_domain_name: "Default"
-      project_domain_name: "Default"
+      user_domain_name: Default
+      project_domain_name: Default
+    region_name: $OS_REGION_NAME
+    interface: $OS_INTERFACE
+    identity_api_version: $OS_IDENTITY_API_VERSION
 EOL
 
 # Source OpenStack RC File
-source /path/to/your/openrc.sh
+source /path/to/openrc.sh
 
 # Create OpenStack Instances
 openstack server create --flavor m1.small --image ubuntu-20.04 --nic net-id=$OS_NETWORK_ID --security-group default ansible-host
