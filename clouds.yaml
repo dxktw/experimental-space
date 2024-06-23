@@ -1,0 +1,9 @@
+clouds:
+  my_cloud:
+    auth:
+      auth_url: https://docs.rumble.cloud/
+      username: 01hkrw9056f1q8vgqx19pc4pt7
+      password: 8e3cdcedd7125e86c919509bcc2121c502363e1af4a949003114bf3cb8674430
+      project_name: Orchestration
+      user_domain_name: "Default"
+      project_domain_name: "Default"
