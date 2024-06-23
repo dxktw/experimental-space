@@ -1,0 +1,9 @@
+export OS_AUTH_URL="https://docs.rumble.cloud/"
+export OS_PROJECT_NAME="Orchestration"
+export OS_USERNAME="01hkrw9056f1q8vgqx19pc4pt7"
+export OS_PASSWORD="8e3cdcedd7125e86c919509bcc2121c502363e1af4a949003114bf3cb8674430"
+export OS_PROJECT_DOMAIN_NAME="Default"
+export OS_USER_DOMAIN_NAME="Default"
+export OS_REGION_NAME="RegionOne"
+export OS_INTERFACE=public
+export OS_IDENTITY_API_VERSION=3
