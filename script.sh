@@ -27,10 +27,6 @@ export OS_INTERFACE=public
 export OS_IDENTITY_API_VERSION=3
 export OS_REGION_NAME=$OS_REGION_NAME
 
-# Install necessary packages
-sudo apt update
-sudo apt install -y python3-openstackclient python3-octaviaclient ansible
-
 # Configure OpenStack CLI
 mkdir -p ~/.config/openstack
 cat > ~/.config/openstack/clouds.yaml <<EOL
