@@ -4,8 +4,8 @@ clouds:
     auth:      
       auth_url: https://keystone.rumble.cloud
 
-      application_credential_id: 1e7cebea32a0411bbb47e3b08e291f5f
-      application_credential_secret: YObyM_BY4jPS2V7Eu3iwpq50FH_MbRI2197J_bMaJh79373wP2sjJYPpCcKo41snIMlGMWyWsvsPNNNeBgzIuA
+      application_credential_id: a18f623f2cb4495e8440d9d5267c2578
+      application_credential_secret: If6bLp19BuZJ8KEwZT_J7hGSFRIrwXe9qVyFKTQoqrYrF7BcZXtufYgr3_yPNRqArsh2ZEmCXX1ayaroyYNOKA
     
     region_name: us-east-1
     
