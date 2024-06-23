@@ -1,9 +1,14 @@
 clouds:
-  my_cloud:
-    auth:
-      auth_url: https://docs.rumble.cloud/
-      username: 01hkrw9056f1q8vgqx19pc4pt7
-      password: 8e3cdcedd7125e86c919509bcc2121c502363e1af4a949003114bf3cb8674430
-      project_name: Orchestration
-      user_domain_name: "Default"
-      project_domain_name: "Default"
+  openstack:
+    
+    auth:      
+      auth_url: https://keystone.rumble.cloud
+
+      application_credential_id: 1e7cebea32a0411bbb47e3b08e291f5f
+      application_credential_secret: YObyM_BY4jPS2V7Eu3iwpq50FH_MbRI2197J_bMaJh79373wP2sjJYPpCcKo41snIMlGMWyWsvsPNNNeBgzIuA
+    
+    region_name: us-east-1
+    
+    interface: "public"
+    identity_api_version: 3
+    auth_type: "v3applicationcredential"
