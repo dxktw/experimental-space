@@ -1,7 +1,5 @@
 #!/bin/bash
 
-#!/bin/bash
-
 # Variables for OpenStack and domain
 OS_AUTH_URL="https://keystone.rumble.cloud"
 OS_PROJECT_NAME="Orchestration"
