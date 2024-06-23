@@ -1,40 +1,16 @@
 #!/bin/bash
 
+# Source the OpenStack RC file to set environment variables
+source ./openrc.sh
+
 # Variables for OpenStack and domain
-OS_AUTH_URL="https://docs.rumble.cloud/"
-OS_PROJECT_NAME="Orchestration"
-OS_USERNAME="01hkrw9056f1q8vgqx19pc4pt7"
-OS_PASSWORD="8e3cdcedd7125e86c919509bcc2121c502363e1af4a949003114bf3cb8674430"
-OS_REGION_NAME="RegionOne"
-OS_INTERFACE="public"
-OS_IDENTITY_API_VERSION=3
 DOMAIN="syndicate.vip"
 MAIL_SERVER="mail.$DOMAIN"
 DKIM_SELECTOR="default"
-OS_NETWORK_ID=""
-
-# Configure OpenStack CLI
-mkdir -p ~/.config/openstack
-cat > ~/.config/openstack/clouds.yaml <<EOL
-clouds:
-  my_cloud:
-    auth:
-      auth_url: $OS_AUTH_URL
-      username: $OS_USERNAME
-      password: $OS_PASSWORD
-      project_name: $OS_PROJECT_NAME
-      user_domain_name: Default
-      project_domain_name: Default
-    region_name: $OS_REGION_NAME
-    interface: $OS_INTERFACE
-    identity_api_version: $OS_IDENTITY_API_VERSION
-EOL
-
-# Source OpenStack RC File
-source ./openrc.sh
+OS_FLAVOR_ID="58ca36f0-7ffa-42e6-aea1-1d4b0471d18a"  # Replace with the desired flavor ID
 
 # Create OpenStack Instances
-openstack server create --flavor m1.small --image ubuntu-20.04 --nic net-id=$OS_NETWORK_ID --security-group default --key-name mykey ansible-host
+openstack server create --flavor $OS_FLAVOR_ID --image ubuntu-20.04 --nic net-id=$OS_NETWORK_ID --security-group default --key-name mykey ansible-host
 ANSIBLE_HOST_IP=$(openstack server list --name ansible-host -f value -c Networks | awk -F'=' '{print $2}')
 
 # Check if the instance was created successfully
