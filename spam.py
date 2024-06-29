@@ -4,7 +4,7 @@ import random
 from github import Github
 
 # GitHub access token
-github_access_token = "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"
+github_access_token = "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"
 
 # Path to the empty file
 file_path = ".tmp"
