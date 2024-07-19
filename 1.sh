@@ -3,11 +3,11 @@
 # This script configures an OpenStack environment, sets up instances, and installs Ansible and a mail server with SSL and DKIM on the Ansible host.
 
 # Set variables for OpenStack
-OS_AUTH_URL="https://docs.rumble.cloud/"
+OS_AUTH_URL="https://keystone.rumble.cloud/"
 OS_PROJECT_NAME="Orchestration"
 OS_USERNAME="01hkrw9056f1q8vgqx19pc4pt7"
 OS_PASSWORD="8e3cdcedd7125e86c919509bcc2121c502363e1af4a949003114bf3cb8674430"
-OS_NETWORK_ID=""
+OS_NETWORK_ID="0d1d802e-f077-4b29-8c99-240fa5e5222"  # Network ID for osc.corp
 
 # Set variables for DNS and mail server
 DOMAIN="syndicate.vip"
@@ -33,20 +33,31 @@ clouds:
 EOL
 
 # Source OpenStack RC File
-source /path/to/your/openrc.sh
+source ./openrc.sh
 
 # Create OpenStack Instances
-openstack server create --flavor m1.small --image ubuntu-20.04 --nic net-id=$OS_NETWORK_ID --security-group default ansible-host
-ANSIBLE_HOST_IP=$(openstack server list --name ansible-host -f value -c Networks | awk -F'=' '{print $2}')
+openstack server create --flavor m1.small --image ubuntu-20.04 --nic net-id=$OS_NETWORK_ID --security-group default --key-name your_key_name_here ansible-host  # Replace 'your_key_name_here' with your actual key name
+
+# Wait for the instance to be active
+while [[ $(openstack server show ansible-host -f value -c status) != "ACTIVE" ]]; do
+    echo "Waiting for ansible-host to become ACTIVE..."
+    sleep 10
+done
+
+# Get Ansible Host IP
+ANSIBLE_HOST_IP=$(openstack server show ansible-host -f value -c addresses | awk -F'=' '{print $2}')
+
+# Ensure the SSH key is available for use
+chmod 600 ./osc1-utility-services.pem  # Path to the SSH key
 
 # Install Ansible on the Ansible Host
-ssh ubuntu@$ANSIBLE_HOST_IP <<EOF
+ssh -o StrictHostKeyChecking=no -i ./osc1-utility-services.pem ubuntu@$ANSIBLE_HOST_IP <<EOF
 sudo apt update
 sudo apt install -y ansible
 EOF
 
 # Configure Mail Server (Postfix, Dovecot)
-ssh ubuntu@$ANSIBLE_HOST_IP <<EOF
+ssh -o StrictHostKeyChecking=no -i ./osc1-utility-services.pem ubuntu@$ANSIBLE_HOST_IP <<EOF
 sudo debconf-set-selections <<< "postfix postfix/mailname string $MAIL_SERVER"
 sudo debconf-set-selections <<< "postfix postfix/main_mailer_type string 'Internet Site'"
 sudo apt install -y postfix dovecot-core dovecot-imapd dovecot-pop3d
@@ -92,7 +103,7 @@ sudo systemctl restart dovecot
 EOF
 
 # Set up SSL certificates using Let's Encrypt
-ssh ubuntu@$ANSIBLE_HOST_IP <<EOF
+ssh -o StrictHostKeyChecking=no -i ./osc1-utility-services.pem ubuntu@$ANSIBLE_HOST_IP <<EOF
 sudo apt install -y certbot
 sudo certbot certonly --standalone -d $MAIL_SERVER
 sudo tee -a /etc/postfix/main.cf > /dev/null <<EOL
@@ -113,7 +124,7 @@ sudo systemctl restart postfix
 EOF
 
 # Set up DKIM
-ssh ubuntu@$ANSIBLE_HOST_IP <<EOF
+ssh -o StrictHostKeyChecking=no -i ./osc1-utility-services.pem ubuntu@$ANSIBLE_HOST_IP <<EOF
 sudo apt install -y opendkim opendkim-tools
 sudo tee /etc/opendkim.conf > /dev/null <<EOL
 Syslog yes
@@ -145,7 +156,7 @@ sudo systemctl restart postfix
 EOF
 
 # Install and Configure Netbird VPN on the Ansible Host
-ssh ubuntu@$ANSIBLE_HOST_IP <<EOF
+ssh -o StrictHostKeyChecking=no -i ./osc1-utility-services.pem ubuntu@$ANSIBLE_HOST_IP <<EOF
 curl -fsSL https://packages.netbird.io/install.sh | sudo bash
 sudo netbird up
 EOF
