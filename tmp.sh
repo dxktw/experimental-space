@@ -5,8 +5,8 @@ DOMAIN="syndicate.vip"
 MAIL_SERVER="mail.$DOMAIN"
 DKIM_SELECTOR="default"
 MYSQL_ROOT_PASSWORD="8e3cdcedd7125e86c919509bcc2121c502363e1af4a949003114bf3cb8674430"
-PDNS_DB_PASSWORD="your_pdns_db_password"
-MAIL_SERVER_IP="your_mail_server_ip"
+PDNS_DB_PASSWORD="sGj4]%C^"
+MAIL_SERVER_IP="207.5.195.27"
 
 # Update system and install necessary packages
 sudo apt update
