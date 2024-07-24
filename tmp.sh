@@ -175,3 +175,4 @@ sudo systemctl enable keycloak
 sudo systemctl start keycloak
 
 echo "Setup completed successfully."
+
