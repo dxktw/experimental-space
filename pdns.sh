@@ -1,3 +1,5 @@
+#!/bin/bash
+
 sudo mysql -u root -p${MYSQL_ROOT_PASSWORD} <<EOF
 USE powerdns;
 
