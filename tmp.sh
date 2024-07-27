@@ -4,7 +4,6 @@
 DOMAIN="syndicate.vip"
 MAIL_SERVER="mail.$DOMAIN"
 DKIM_SELECTOR="default"
-PDNS_DB_PASSWORD="sGj4]%C^"
 MAIL_SERVER_IP="207.5.194.102"
 KEYCLOAK_USER="admin"
 KEYCLOAK_PASSWORD="admin"
@@ -15,22 +14,25 @@ NETBIRD_REPO="https://packages.netbird.io/debian/netbird-release.key"
 sudo apt update && sudo apt upgrade -y
 sudo apt install -y postfix dovecot-core dovecot-imapd dovecot-pop3d certbot pdns-server pdns-backend-mysql mysql-server opendkim opendkim-tools default-jdk
 
+echo -e "\n\n\n--------------------------------------------------------------------------\n\n\n"
 sleep 100
 
 # Configure MySQL for PowerDNS
 sudo mysql -u root -ppass <<EOF
 CREATE DATABASE powerdns;
-CREATE USER 'powerdns'@'localhost' IDENTIFIED BY '${PDNS_DB_PASSWORD}';
+CREATE USER 'powerdns'@'localhost' IDENTIFIED BY pdnspass;
 GRANT ALL PRIVILEGES ON powerdns.* TO 'powerdns'@'localhost';
 FLUSH PRIVILEGES;
 EOF
 
+echo -e "\n\n\n--------------------------------------------------------------------------\n\n\n"
 sleep 100
 
 # Download and import PowerDNS schema
 wget https://raw.githubusercontent.com/PowerDNS/pdns/master/modules/gmysqlbackend/schema.mysql.sql
 sudo mysql -u root -ppass powerdns < schema.mysql.sql
 
+echo -e "\n\n\n--------------------------------------------------------------------------\n\n\n"
 sleep 100
 
 # Configure PowerDNS
@@ -42,12 +44,14 @@ gmysql-password=${PDNS_DB_PASSWORD}
 gmysql-dbname=powerdns
 EOL
 
+echo -e "\n\n\n--------------------------------------------------------------------------\n\n\n"
 sleep 100
 
 # Restart and enable PowerDNS
 sudo systemctl restart pdns
 sudo systemctl enable pdns
 
+echo -e "\n\n\n--------------------------------------------------------------------------\n\n\n"
 sleep 100
 
 # Add DNS records
@@ -59,32 +63,38 @@ INSERT INTO records (domain_id, name, type, content, ttl, prio) VALUES ((SELECT 
 INSERT INTO records (domain_id, name, type, content, ttl, prio) VALUES ((SELECT id FROM domains WHERE name='${DOMAIN}'), '${DOMAIN}', 'MX', '${MAIL_SERVER}', 86400, 10);
 INSERT INTO records (domain_id, name, type, content, ttl, prio) VALUES ((SELECT id FROM domains WHERE name='${DOMAIN}'), '${MAIL_SERVER}', 'A', '${MAIL_SERVER_IP}', 86400, NULL);
 
+echo -e "\n\n\n--------------------------------------------------------------------------\n\n\n"
 sleep 100
 
 INSERT INTO domains (name, type) VALUES ('connect.syndicate.vip', 'NATIVE');
 INSERT INTO records (domain_id, name, type, content, ttl, prio) VALUES ((SELECT id FROM domains WHERE name='connect.syndicate.vip'), 'connect.syndicate.vip', 'A', '${MAIL_SERVER_IP}', 86400, NULL);
 
+echo -e "\n\n\n--------------------------------------------------------------------------\n\n\n"
 sleep 100
 
 INSERT INTO domains (name, type) VALUES ('vpn.syndicate.vip', 'NATIVE');
 INSERT INTO records (domain_id, name, type, content, ttl, prio) VALUES ((SELECT id FROM domains WHERE name='vpn.syndicate.vip'), 'vpn.syndicate.vip', 'A', '${MAIL_SERVER_IP}', 86400, NULL);
 
+echo -e "\n\n\n--------------------------------------------------------------------------\n\n\n"
 sleep 100
 
 INSERT INTO domains (name, type) VALUES ('conductor.orchestra.private', 'NATIVE');
 INSERT INTO records (domain_id, name, type, content, ttl, prio) VALUES ((SELECT id FROM domains WHERE name='conductor.orchestra.private'), 'conductor.orchestra.private', 'A', '${MAIL_SERVER_IP}', 86400, NULL);
 
+echo -e "\n\n\n--------------------------------------------------------------------------\n\n\n"
 sleep 100
 
 INSERT INTO domains (name, type) VALUES ('netbird.syndicate.vip', 'NATIVE');
 INSERT INTO records (domain_id, name, type, content, ttl, prio) VALUES ((SELECT id FROM domains WHERE name='netbird.syndicate.vip'), 'netbird.syndicate.vip', 'A', '${MAIL_SERVER_IP}', 86400, NULL);
 
+echo -e "\n\n\n--------------------------------------------------------------------------\n\n\n"
 sleep 100
 
 INSERT INTO domains (name, type) VALUES ('keycloak.syndicate.vip', 'NATIVE');
 INSERT INTO records (domain_id, name, type, content, ttl, prio) VALUES ((SELECT id FROM domains WHERE name='keycloak.syndicate.vip'), 'keycloak.syndicate.vip', 'A', '${MAIL_SERVER_IP}', 86400, NULL);
 EOF
 
+echo -e "\n\n\n--------------------------------------------------------------------------\n\n\n"
 sleep 100
 
 # Generate DKIM keys and add DNS records for DKIM, SPF, and DMARC
@@ -93,10 +103,12 @@ sudo mkdir -p /etc/opendkim/keys
 sudo mv ${DKIM_SELECTOR}.private /etc/opendkim/keys/${DOMAIN}.private
 sudo chown opendkim:opendkim /etc/opendkim/keys/${DOMAIN}.private
 
+echo -e "\n\n\n--------------------------------------------------------------------------\n\n\n"
 sleep 100
 
 DKIM_RECORD=$(cat ${DKIM_SELECTOR}.txt)
 
+echo -e "\n\n\n--------------------------------------------------------------------------\n\n\n"
 sleep 100
 
 sudo mysql -u root -ppass <<EOF
@@ -106,6 +118,7 @@ INSERT INTO records (domain_id, name, type, content, ttl, prio) VALUES ((SELECT 
 INSERT INTO records (domain_id, name, type, content, ttl, prio) VALUES ((SELECT id FROM domains WHERE name='${DOMAIN}'), '_dmarc.${DOMAIN}', 'TXT', 'v=DMARC1; p=none; rua=mailto:postmaster@${DOMAIN}', 86400, NULL);
 EOF
 
+echo -e "\n\n\n--------------------------------------------------------------------------\n\n\n"
 sleep 100
 
 # Configure Postfix
@@ -113,6 +126,7 @@ sudo debconf-set-selections <<< "postfix postfix/mailname string $MAIL_SERVER"
 sudo debconf-set-selections <<< "postfix postfix/main_mailer_type string 'Internet Site'"
 sudo apt install -y postfix
 
+echo -e "\n\n\n--------------------------------------------------------------------------\n\n\n"
 sleep 100
 
 sudo tee /etc/postfix/main.cf > /dev/null <<EOL
@@ -145,10 +159,12 @@ smtpd_milters = inet:localhost:8891
 non_smtpd_milters = inet:localhost:8891
 EOL
 
+echo -e "\n\n\n--------------------------------------------------------------------------\n\n\n"
 sleep 100
 
 sudo systemctl restart postfix
 
+echo -e "\n\n\n--------------------------------------------------------------------------\n\n\n"
 sleep 100
 
 # Configure Dovecot
@@ -172,15 +188,18 @@ service auth {
 }
 EOL
 
+echo -e "\n\n\n--------------------------------------------------------------------------\n\n\n"
 sleep 100
 
 sudo systemctl restart dovecot
 
+echo -e "\n\n\n--------------------------------------------------------------------------\n\n\n"
 sleep 100
 
 # Set up SSL certificates using Let's Encrypt
 sudo certbot certonly --standalone -d $MAIL_SERVER
 
+echo -e "\n\n\n--------------------------------------------------------------------------\n\n\n"
 sleep 100
 
 # Set up DKIM
@@ -193,17 +212,20 @@ KeyFile /etc/opendkim/keys/$DOMAIN.private
 Socket inet:8891@localhost
 EOL
 
+echo -e "\n\n\n--------------------------------------------------------------------------\n\n\n"
 sleep 100
 
 sudo tee /etc/default/opendkim > /dev/null <<EOL
 SOCKET="inet:8891@localhost"
 EOL
 
+echo -e "\n\n\n--------------------------------------------------------------------------\n\n\n"
 sleep 100
 
 sudo systemctl restart opendkim
 sudo systemctl restart postfix
 
+echo -e "\n\n\n--------------------------------------------------------------------------\n\n\n"
 sleep 100
 
 # Install and Configure Netbird VPN
@@ -212,11 +234,13 @@ echo "deb https://packages.netbird.io/debian/ netbird main" | sudo tee /etc/apt/
 sudo apt update
 sudo apt install -y netbird
 
+echo -e "\n\n\n--------------------------------------------------------------------------\n\n\n"
 sleep 100
 
 # Start Netbird and obtain a setup key from the admin panel
 sudo netbird up --setup-key YOUR_SETUP_KEY
 
+echo -e "\n\n\n--------------------------------------------------------------------------\n\n\n"
 sleep 100
 
 # Install Keycloak
@@ -224,10 +248,12 @@ wget https://github.com/keycloak/keycloak/releases/download/${KEYCLOAK_VERSION}/
 tar -xvzf keycloak-${KEYCLOAK_VERSION}.tar.gz
 sudo mv keycloak-${KEYCLOAK_VERSION} /opt/keycloak
 
+echo -e "\n\n\n--------------------------------------------------------------------------\n\n\n"
 sleep 100
 
 sudo /opt/keycloak/bin/kc.sh start-dev --http-port=8080 &
 
+echo -e "\n\n\n--------------------------------------------------------------------------\n\n\n"
 sleep 100
 
 # Configuring Keycloak as a service
@@ -236,6 +262,7 @@ sudo tee /etc/systemd/system/keycloak.service > /dev/null <<EOL
 Description=Keycloak Service
 After=network.target
 
+echo -e "\n\n\n--------------------------------------------------------------------------\n\n\n"
 sleep 100
 
 [Service]
@@ -245,18 +272,21 @@ User=keycloak
 Group=keycloak
 Restart=always
 
+echo -e "\n\n\n--------------------------------------------------------------------------\n\n\n"
 sleep 100
 
 [Install]
 WantedBy=multi-user.target
 EOL
 
+echo -e "\n\n\n--------------------------------------------------------------------------\n\n\n"
 sleep 100
 
 sudo systemctl daemon-reload
 sudo systemctl enable keycloak
 sudo systemctl start keycloak
 
+echo -e "\n\n\n--------------------------------------------------------------------------\n\n\n"
 sleep 100
 
 echo "Setup completed successfully."
