@@ -61,3 +61,4 @@ while commits_made < total_commits and repos_used < len(repos):
     repos_used += 1
 
 print(f"Total commits made: {commits_made}")
+
